@@ -1,6 +1,8 @@
 package com.pss.pss_backend.controller;
 
+import com.pss.pss_backend.dto.DelayRequest;
 import com.pss.pss_backend.dto.RideDTO;
+import com.pss.pss_backend.dto.RideStatusDTO;
 import com.pss.pss_backend.model.Ride;
 import com.pss.pss_backend.service.RideService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,4 +69,24 @@ public class RideController {
     public void deleteRide(@PathVariable Long rideId) {
         rideService.deleteRide(rideId);
     }
+
+    @GetMapping("/filter")
+    public List<RideStatusDTO> getRidesByStatusAndUser(
+            @RequestParam String status) {
+        String username = getLoggedInUsername();
+        return rideService.getRidesByStatusAndUser(status, username);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelRide(@PathVariable Long id) {
+        rideService.cancelRide(id);
+        return ResponseEntity.ok("Ride cancelled successfully");
+    }
+
+    @PostMapping("/{id}/delay")
+    public ResponseEntity<?> reportDelay(@PathVariable Long id, @RequestBody DelayRequest delayRequest) {
+        rideService.reportDelay(id, delayRequest.getNewDepartureTime());
+        return ResponseEntity.ok("Delay reported successfully");
+    }
+
 }

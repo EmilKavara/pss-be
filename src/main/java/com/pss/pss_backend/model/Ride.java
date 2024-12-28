@@ -1,11 +1,17 @@
 package com.pss.pss_backend.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import lombok.Data;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "rides")
+@Data
 public class Ride {
 
     @Id
@@ -35,6 +41,11 @@ public class Ride {
 
     @Column(name="created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "ride", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<RidePassenger> ridePassengers = new ArrayList<>();
+
 
     public Long getRideId() {
         return rideId;

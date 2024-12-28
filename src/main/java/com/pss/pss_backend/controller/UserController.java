@@ -53,7 +53,7 @@ public class UserController {
     @GetMapping("/profile")
     public ResponseEntity<User> getUserProfile(Principal principal) {
         String username = principal.getName();
-        Optional<User> userOptional = userService.getUserUsername(username);
+        Optional<User> userOptional = userService.getUserByUsername(username);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             user.setRideHistory(userService.getUserRideHistory(username)); // Fetch and set ride history
@@ -68,7 +68,7 @@ public class UserController {
     public User updateUserProfile(@RequestBody User user, Principal principal) {
         String username = principal.getName();
         // Retrieve the current user, or throw an exception if not found
-        User currentUser = userService.getUserUsername(username)
+        User currentUser = userService.getUserByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         // Update the current user's fields

@@ -32,18 +32,28 @@ public class VehicleService {
         Optional<Vehicle> existingVehicleOptional = vehicleRepository.findById(vehicleId);
 
         if (existingVehicleOptional.isEmpty()) {
-            throw new RuntimeException("Vehicle not found with ID: " + vehicleId);
+            throw new RuntimeException("Vehicle not found with ID: " + vehicleId); // This throws a 404 error in the controller
         }
 
         Vehicle existingVehicle = existingVehicleOptional.get();
 
-        existingVehicle.setLicensePlate(updatedVehicle.getLicensePlate());
-        existingVehicle.setSeats(updatedVehicle.getSeats());
-        existingVehicle.setModel(updatedVehicle.getModel());
+        if (existingVehicle.getMake() != updatedVehicle.getMake()) {
+            existingVehicle.setMake(updatedVehicle.getMake());
+        }
+        if (!existingVehicle.getLicensePlate().equals(updatedVehicle.getLicensePlate())) {
+            existingVehicle.setLicensePlate(updatedVehicle.getLicensePlate());
+        }
+        if (existingVehicle.getSeats() != updatedVehicle.getSeats()) {
+            existingVehicle.setSeats(updatedVehicle.getSeats());
+        }
+        if (!existingVehicle.getModel().equals(updatedVehicle.getModel())) {
+            existingVehicle.setModel(updatedVehicle.getModel());
+        }
 
         // Save the updated vehicle back to the repository
         return vehicleRepository.save(existingVehicle);
     }
+
 
 
     public Optional<Vehicle> getVehicleById(Long vehicleId) {

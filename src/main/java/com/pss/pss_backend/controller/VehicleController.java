@@ -74,7 +74,7 @@ public class VehicleController {
     @GetMapping("/driver")
     public ResponseEntity<Vehicle> getVehicleForDriver() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Optional<User> driverOptional = userService.getUserUsername(username);
+        Optional<User> driverOptional = userService.getUserByUsername(username);
 
         if (driverOptional.isEmpty()) {
             return ResponseEntity.badRequest().body(null);
