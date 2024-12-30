@@ -15,7 +15,6 @@ public class RequestDTO {
         this.status = status;
     }
 
-    // Getters and Setters
     public Long getRequestId() {
         return requestId;
     }

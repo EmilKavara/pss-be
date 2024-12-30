@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,14 +40,11 @@ public class RideService {
     private NotificationService notificationService;
 
     public void createRide(RideDTO rideDTO, String username) {
-        // Dohvati vozača (autorizovanog korisnika)
         User driver = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // Validacija vremena
         validateDepartureTime(rideDTO.getDepartureTime());
 
-        // Kreiraj vožnju
         Ride ride = new Ride();
         ride.setOrigin(rideDTO.getStartLocation());
         ride.setDestination(rideDTO.getDestination());
@@ -60,10 +58,9 @@ public class RideService {
         ridePassenger.setRide(savedRide);
         ridePassenger.setUser(driver);
         ridePassenger.setRole("driver");
-        ridePassenger.setStatus("APPROVED"); // Explicitly set status
+        ridePassenger.setStatus("APPROVED");
         ridePassengerRepository.save(ridePassenger);
 
-        // Pošalji mejl potvrde
         sendRideConfirmationEmail(savedRide);
     }
 
@@ -113,7 +110,6 @@ public class RideService {
     }
 
     public void deleteRide(Long rideId) {
-        // Optionally, delete associated ride passengers
         ridePassengerRepository.deleteByRide_RideId(rideId);
         rideRepository.deleteById(rideId);
     }
@@ -127,7 +123,6 @@ public class RideService {
             rides = rideRepository.findByStatusAndDriver_Username(status, username);
         }
 
-        // Transform `Ride` entities to `RideDTO` objects
         return rides.stream()
                 .map(ride -> new RideStatusDTO(
                         ride.getRideId(),
@@ -135,7 +130,8 @@ public class RideService {
                         ride.getDestination(),
                         ride.getDepartureTime(),
                         ride.getStatus(),
-                        ride.getAvailableSeats()
+                        ride.getAvailableSeats(),
+                        ride.getDriver().getFullName()
                 ))
                 .collect(Collectors.toList());
     }
@@ -147,7 +143,6 @@ public class RideService {
         ride.setStatus("CANCELLED");
         rideRepository.save(ride);
 
-        // Notify passengers about the cancellation
         notificationService.notifyPassengers(ride, "The ride has been cancelled.");
     }
 
@@ -157,16 +152,13 @@ public class RideService {
         ride.setDepartureTime(newDepartureTime);
         rideRepository.save(ride);
 
-        // Notify passengers about the delay
         notificationService.notifyPassengers(ride, "The ride is delayed. New departure time: " + newDepartureTime);
     }
 
     public void passengerCancelRide(Long rideId, Long passengerId) {
-        // Pronađi vožnju
         Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new RideNotFoundException("Ride not found"));
 
-        // Pronađi putnika za vožnju
         RidePassenger ridePassenger = ridePassengerRepository
                 .findByRide_RideIdAndUser_UserIdAndRole(rideId, passengerId, "passenger")
                 .orElseThrow(() -> new RuntimeException("Passenger not found for this ride"));
@@ -175,14 +167,11 @@ public class RideService {
             throw new RuntimeException("Passenger cannot cancel this ride. Status: " + ridePassenger.getStatus());
         }
 
-        // Ukloni putnika iz vožnje
         ridePassengerRepository.delete(ridePassenger);
 
-        // Povećaj broj slobodnih sedišta
         ride.setAvailableSeats(ride.getAvailableSeats() + 1);
         rideRepository.save(ride);
 
-        // Kreiraj notifikaciju za vozača
         String notificationMessage = String.format(
                 "Passenger %s has canceled their participation in the ride from %s to %s.",
                 ridePassenger.getUser().getFullName(), ride.getOrigin(), ride.getDestination()
@@ -192,6 +181,50 @@ public class RideService {
         notification.setMessage(notificationMessage);
         notification.setStatus("UNREAD");
         notificationService.saveNotification(notification);
+    }
+
+    public List<RideStatusDTO> getFilteredRides(String status, String destination, int minSeats, String sortBy) {
+        // Fetch rides based on status
+        List<Ride> rides = rideRepository.findByStatus(status);
+
+        // Filter by destination if provided
+        if (destination != null && !destination.isEmpty()) {
+            rides = rides.stream()
+                    .filter(ride -> ride.getDestination().equalsIgnoreCase(destination))
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by minimum available seats
+        rides = rides.stream()
+                .filter(ride -> ride.getAvailableSeats() >= minSeats)
+                .collect(Collectors.toList());
+
+        // Sort based on the sortBy parameter
+        if (sortBy != null) {
+            switch (sortBy) {
+                case "availableSeats":
+                    rides.sort(Comparator.comparingInt(Ride::getAvailableSeats).reversed());
+                    break;
+                case "departureTime":
+                    rides.sort(Comparator.comparing(Ride::getDepartureTime));
+                    break;
+                default:
+                    break; // No sorting if sortBy is empty or invalid
+            }
+        }
+
+        // Convert to DTOs
+        return rides.stream()
+                .map(ride -> new RideStatusDTO(
+                        ride.getRideId(),
+                        ride.getOrigin(),
+                        ride.getDestination(),
+                        ride.getDepartureTime(),
+                        ride.getStatus(),
+                        ride.getAvailableSeats(),
+                        ride.getDriver().getFullName()
+                ))
+                .collect(Collectors.toList());
     }
 
 

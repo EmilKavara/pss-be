@@ -1,6 +1,6 @@
 package com.pss.pss_backend.controller;
 
-import com.pss.pss_backend.model.User;
+import com.pss.pss_backend.dto.VehicleDTO;
 import com.pss.pss_backend.model.Vehicle;
 import com.pss.pss_backend.service.UserService;
 import com.pss.pss_backend.service.VehicleService;
@@ -24,67 +24,55 @@ public class VehicleController {
     private UserService userService;
 
     @PostMapping
-    public ResponseEntity<Vehicle> createVehicle(@RequestBody Vehicle vehicle) {
+    public ResponseEntity<VehicleDTO> createVehicle(@RequestBody Vehicle vehicle) {
         try {
             Vehicle savedVehicle = vehicleService.saveVehicle(vehicle);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedVehicle);
+            VehicleDTO vehicleDTO = vehicleService.getVehicleById(savedVehicle.getVehicleId()).orElseThrow();
+            return ResponseEntity.status(HttpStatus.CREATED).body(vehicleDTO);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
     @PutMapping("/{vehicleId}")
-    public ResponseEntity<Vehicle> updateVehicle(@PathVariable Long vehicleId, @RequestBody Vehicle updatedVehicle) {
+    public ResponseEntity<VehicleDTO> updateVehicle(@PathVariable Long vehicleId, @RequestBody Vehicle updatedVehicle) {
         try {
-            // Call the service method to update the vehicle
-            Vehicle updated = vehicleService.updateVehicle(vehicleId, updatedVehicle);
+            VehicleDTO updated = vehicleService.updateVehicle(vehicleId, updatedVehicle);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);  // 404 Not Found if vehicle not found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
 
-
-
     @GetMapping("/{vehicleId}")
-    public Optional<Vehicle> getVehicleById(@PathVariable Long vehicleId) {
-        return vehicleService.getVehicleById(vehicleId);
+    public ResponseEntity<VehicleDTO> getVehicleById(@PathVariable Long vehicleId) {
+        Optional<VehicleDTO> vehicleDTO = vehicleService.getVehicleById(vehicleId);
+        return vehicleDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public List<Vehicle> getAllVehicles() {
+    public List<VehicleDTO> getAllVehicles() {
         return vehicleService.getAllVehicles();
     }
 
     @DeleteMapping("/{vehicleId}")
-    public void deleteVehicle(@PathVariable Long vehicleId) {
+    public ResponseEntity<Void> deleteVehicle(@PathVariable Long vehicleId) {
         vehicleService.deleteVehicle(vehicleId);
-    }
-
-    @GetMapping("/{vehicleId}/seats")
-    public ResponseEntity<Integer> getMaxSeats(@PathVariable Long vehicleId) {
-        try {
-            int maxSeats = vehicleService.getMaxSeats(vehicleId);
-            return ResponseEntity.ok(maxSeats);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().body(null);
-        }
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/driver")
-    public ResponseEntity<Vehicle> getVehicleForDriver() {
+    public ResponseEntity<VehicleDTO> getVehicleForDriver() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Optional<User> driverOptional = userService.getUserByUsername(username);
+        Optional<com.pss.pss_backend.model.User> driverOptional = userService.getUserByUsername(username);
 
         if (driverOptional.isEmpty()) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().build();
         }
 
-        User driver = driverOptional.get();
+        com.pss.pss_backend.model.User driver = driverOptional.get();
+        Optional<VehicleDTO> vehicleOptional = vehicleService.getVehicleByDriver(driver);
 
-        Optional<Vehicle> vehicleOptional = vehicleService.getVehicleByDriver(driver);
-        System.out.println("Vehicle found: " + vehicleOptional);
         return vehicleOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
-
 }

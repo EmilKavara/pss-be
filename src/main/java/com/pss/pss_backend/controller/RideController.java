@@ -31,7 +31,6 @@ public class RideController {
             String username = getLoggedInUsername();
             rideService.createRide(rideDTO, username);
 
-            // Return a JSON response with a message
             Map<String, String> response = new HashMap<>();
             response.put("message", "Ride created successfully");
 
@@ -49,9 +48,9 @@ public class RideController {
     private String getLoggedInUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();  // This returns the username from the JWT token
+            return ((UserDetails) principal).getUsername();
         } else {
-            return principal.toString();  // If it's not an instance of UserDetails, return the principal as a string
+            return principal.toString();
         }
     }
 
@@ -88,5 +87,15 @@ public class RideController {
         rideService.reportDelay(id, delayRequest.getNewDepartureTime());
         return ResponseEntity.ok("Delay reported successfully");
     }
+
+    @GetMapping("/filter-advanced")
+    public List<RideStatusDTO> getRidesByFilters(
+            @RequestParam String status,
+            @RequestParam(required = false) String destination,
+            @RequestParam(required = false, defaultValue = "0") int minSeats,
+            @RequestParam(required = false) String sortBy) {
+        return rideService.getFilteredRides(status, destination, minSeats, sortBy);
+    }
+
 
 }

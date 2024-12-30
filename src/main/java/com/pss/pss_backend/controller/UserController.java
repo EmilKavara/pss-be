@@ -1,5 +1,6 @@
 package com.pss.pss_backend.controller;
 
+import com.pss.pss_backend.dto.UserProfileDTO;
 import com.pss.pss_backend.model.User;
 import com.pss.pss_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,13 +52,14 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<User> getUserProfile(Principal principal) {
+    public ResponseEntity<UserProfileDTO> getUserProfile(Principal principal) {
         String username = principal.getName();
-        Optional<User> userOptional = userService.getUserByUsername(username);
+        Optional<com.pss.pss_backend.model.User> userOptional = userService.getUserByUsername(username);
+
         if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setRideHistory(userService.getUserRideHistory(username)); // Fetch and set ride history
-            return ResponseEntity.ok(user);
+            com.pss.pss_backend.model.User user = userOptional.get();
+            UserProfileDTO userProfileDTO = userService.toUserProfileDTO(user);
+            return ResponseEntity.ok(userProfileDTO);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
@@ -67,15 +69,15 @@ public class UserController {
     @PutMapping("/profile")
     public User updateUserProfile(@RequestBody User user, Principal principal) {
         String username = principal.getName();
-        // Retrieve the current user, or throw an exception if not found
         User currentUser = userService.getUserByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        // Update the current user's fields
         currentUser.setFullName(user.getFullName());
         currentUser.setEmail(user.getEmail());
 
         return userService.saveUser(currentUser);
     }
+
+
 
 }

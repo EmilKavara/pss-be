@@ -1,8 +1,10 @@
 package com.pss.pss_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -42,22 +44,20 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "driver", fetch = FetchType.LAZY)
     @JsonManagedReference
+    @ToString.Exclude
+    @JsonIgnore
     private List<Ride> rideHistory;
 
+    @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    @ToString.Exclude
+    private List<Vehicle> vehicles = new ArrayList<>();
+
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @ToString.Exclude
+    @JsonIgnore
     private List<RidePassenger> ridePassengers = new ArrayList<>();
-
-
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

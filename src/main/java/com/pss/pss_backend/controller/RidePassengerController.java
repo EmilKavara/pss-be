@@ -27,39 +27,31 @@ public class RidePassengerController {
 
     @GetMapping("/requests")
     public List<RequestDTO> getRequests() {
-        // Get the logged-in username from the token
         String username = getLoggedInUsername();
 
-        // Fetch the driverId from the UserService based on the username
         Long driverId = userService.getUserByUsername(username)
-                .map(user -> user.getUserId().longValue())  // Convert userId to Long
+                .map(user -> user.getUserId().longValue())
                 .orElseThrow(() -> new RuntimeException("Driver not found for username: " + username));
 
-        // Use the driverId to get the requests for that driver
         return ridePassengerService.getRequestsForDriver(driverId);
     }
 
     @PostMapping("/requests/{requestId}/handle")
     public ResponseEntity<Map<String, String>> handleRequest(@PathVariable Long requestId, @RequestParam boolean isAccepted) {
         try {
-            // Get the logged-in username from the token
             String username = getLoggedInUsername();
 
-            // Fetch the driverId from the UserService based on the username
             Long driverId = userService.getUserByUsername(username)
-                    .map(user -> user.getUserId().longValue())  // Convert userId to Long
+                    .map(user -> user.getUserId().longValue())
                     .orElseThrow(() -> new RuntimeException("Driver not found for username: " + username));
 
-            // Handle the request
             ridePassengerService.handleRequest(requestId, isAccepted);
             String message = isAccepted ? "Request approved successfully" : "Request denied successfully";
 
-            // Return a JSON response with a message
             Map<String, String> response = new HashMap<>();
             response.put("message", message);
             return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {
-            // Return a JSON response with an error message
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", ex.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
@@ -70,9 +62,9 @@ public class RidePassengerController {
     private String getLoggedInUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
-            return ((UserDetails) principal).getUsername();  // Extract the username from JWT token
+            return ((UserDetails) principal).getUsername();
         } else {
-            return principal.toString();  // If not an instance of UserDetails, return the principal as a string
+            return principal.toString();
         }
     }
 

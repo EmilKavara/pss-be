@@ -1,10 +1,7 @@
 package com.pss.pss_backend.service;
 
 import com.pss.pss_backend.dto.RequestDTO;
-import com.pss.pss_backend.model.Notification;
-import com.pss.pss_backend.model.Reservation;
-import com.pss.pss_backend.model.Ride;
-import com.pss.pss_backend.model.RidePassenger;
+import com.pss.pss_backend.model.*;
 import com.pss.pss_backend.repository.NotificationRepository;
 import com.pss.pss_backend.repository.ReservationRepository;
 import com.pss.pss_backend.repository.RidePassengerRepository;
@@ -30,7 +27,6 @@ public class RidePassengerService {
     private EmailService emailService;
 
     public void addPassengerToRide(RidePassenger ridePassenger) {
-        // When adding a passenger, set status to "pending"
         ridePassenger.setStatus("PENDING");
         ridePassengerRepository.save(ridePassenger);
     }
@@ -72,10 +68,8 @@ public class RidePassengerService {
         String userEmail = request.getUser().getEmail();
 
         if (isAccepted) {
-            // Change the status of the RidePassenger to "approved"
             request.setStatus("APPROVED");
 
-            // Handle available seats decrement logic
             Ride ride = request.getRide();
             if (ride.getAvailableSeats() > 0) {
                 ride.setAvailableSeats(ride.getAvailableSeats() - 1);
@@ -83,31 +77,22 @@ public class RidePassengerService {
                 throw new RuntimeException("No available seats");
             }
 
-            // Save the RidePassenger with updated status
             ridePassengerRepository.save(request);
 
-            // Create a Reservation for the approved passenger
             Reservation reservation = new Reservation();
             reservation.setRide(ride);
-            reservation.setPassenger(request.getUser()); // The user who requested the ride
-            reservation.setBookedSeats(1); // Assuming 1 seat is booked for the passenger
-            reservation.setReservationStatus("CONFIRMED"); // Set reservation status to "Confirmed"
-            reservationRepository.save(reservation); // Save the reservation
+            reservation.setPassenger(request.getUser());
+            reservation.setBookedSeats(1);
+            reservation.setReservationStatus("CONFIRMED");
+            reservationRepository.save(reservation);
 
-            // Send approval email
             String subject = "Ride Request Approved";
-            String body = String.format(
-                    "Dear %s,\n\nYour request to join the ride from %s to %s has been approved. "
-                            + "The ride departs at %s. Please contact the driver for further details.\n\nBest regards,\nRide Team",
-                    request.getUser().getFullName(), ride.getOrigin(), ride.getDestination(), ride.getDepartureTime()
-            );
+            String body = buildApprovalEmailBody(request.getUser(), ride);
             emailService.sendConfirmationEmail(userEmail, subject, body);
 
         } else {
-            // Change the status of the RidePassenger to "denied"
             request.setStatus("DENIED");
 
-            // Create a denial notification for the user
             Notification notification = new Notification();
             notification.setUser(request.getUser());
             notification.setMessage(String.format(
@@ -115,13 +100,45 @@ public class RidePassengerService {
                     request.getRide().getOrigin(),
                     request.getRide().getDestination()
             ));
-            notification.setStatus("UNREAD"); // Set the notification status as "unread"
-            notificationRepository.save(notification); // Save the notification
+            notification.setStatus("UNREAD");
+            notificationRepository.save(notification);
 
-            // Save the RidePassenger with updated status
             ridePassengerRepository.save(request);
         }
     }
+
+    private String buildApprovalEmailBody(User passenger, Ride ride) {
+        return String.format(
+                "<html>" +
+                        "<head>" +
+                        "<style>" +
+                        "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }" +
+                        "table { width: 100%%; border-collapse: collapse; margin-top: 20px; }" +
+                        "th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }" +
+                        "th { background-color: #f4f4f4; font-weight: bold; }" +
+                        "</style>" +
+                        "</head>" +
+                        "<body>" +
+                        "<h2>Dear %s,</h2>" +
+                        "<p>We are delighted to inform you that your request to join the ride has been approved!</p>" +
+                        "<h3>Ride Details</h3>" +
+                        "<table>" +
+                        "<tr><th>Start Location</th><td>%s</td></tr>" +
+                        "<tr><th>Destination</th><td>%s</td></tr>" +
+                        "<tr><th>Departure Time</th><td>%s</td></tr>" +
+                        "</table>" +
+                        "<p>Please make sure to be on time at the departure location. Feel free to contact the driver for any additional details.</p>" +
+                        "<p>We wish you a pleasant journey!</p>" +
+                        "<p><strong>Best regards,</strong><br>The Ride Team</p>" +
+                        "</body>" +
+                        "</html>",
+                passenger.getFullName(),
+                ride.getOrigin(),
+                ride.getDestination(),
+                ride.getDepartureTime()
+        );
+    }
+
 
 
 

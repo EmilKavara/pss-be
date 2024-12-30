@@ -1,5 +1,6 @@
 package com.pss.pss_backend.service;
 
+import com.pss.pss_backend.dto.VehicleDTO;
 import com.pss.pss_backend.model.User;
 import com.pss.pss_backend.model.Vehicle;
 import com.pss.pss_backend.repository.VehicleRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class VehicleService {
@@ -27,17 +29,16 @@ public class VehicleService {
         return vehicleRepository.save(vehicle);
     }
 
-    public Vehicle updateVehicle(Long vehicleId, Vehicle updatedVehicle) {
-        // Find the existing vehicle by ID
+    public VehicleDTO updateVehicle(Long vehicleId, Vehicle updatedVehicle) {
         Optional<Vehicle> existingVehicleOptional = vehicleRepository.findById(vehicleId);
 
         if (existingVehicleOptional.isEmpty()) {
-            throw new RuntimeException("Vehicle not found with ID: " + vehicleId); // This throws a 404 error in the controller
+            throw new RuntimeException("Vehicle not found with ID: " + vehicleId);
         }
 
         Vehicle existingVehicle = existingVehicleOptional.get();
 
-        if (existingVehicle.getMake() != updatedVehicle.getMake()) {
+        if (!existingVehicle.getMake().equals(updatedVehicle.getMake())) {
             existingVehicle.setMake(updatedVehicle.getMake());
         }
         if (!existingVehicle.getLicensePlate().equals(updatedVehicle.getLicensePlate())) {
@@ -50,22 +51,26 @@ public class VehicleService {
             existingVehicle.setModel(updatedVehicle.getModel());
         }
 
-        // Save the updated vehicle back to the repository
-        return vehicleRepository.save(existingVehicle);
+        Vehicle savedVehicle = vehicleRepository.save(existingVehicle);
+        return toDTO(savedVehicle);
     }
 
-
-
-    public Optional<Vehicle> getVehicleById(Long vehicleId) {
-        return vehicleRepository.findById(vehicleId);
+    public Optional<VehicleDTO> getVehicleById(Long vehicleId) {
+        return vehicleRepository.findById(vehicleId).map(this::toDTO);
     }
 
-    public List<Vehicle> getAllVehicles() {
-        return vehicleRepository.findAll();
+    public List<VehicleDTO> getAllVehicles() {
+        return vehicleRepository.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     public void deleteVehicle(Long vehicleId) {
         vehicleRepository.deleteById(vehicleId);
+    }
+
+    public Optional<VehicleDTO> getVehicleByDriver(User driver) {
+        return vehicleRepository.findByDriver(driver).map(this::toDTO);
     }
 
     public int getMaxSeats(Long vehicleId) {
@@ -74,8 +79,16 @@ public class VehicleService {
         return vehicle.getSeats();
     }
 
-    public Optional<Vehicle> getVehicleByDriver(User driver) {
-        return vehicleRepository.findByDriver(driver);
+    // Metoda za konverziju iz Vehicle u VehicleDTO
+    private VehicleDTO toDTO(Vehicle vehicle) {
+        VehicleDTO dto = new VehicleDTO();
+        dto.setVehicleId(vehicle.getVehicleId());
+        dto.setMake(vehicle.getMake());
+        dto.setModel(vehicle.getModel());
+        dto.setLicensePlate(vehicle.getLicensePlate());
+        dto.setSeats(vehicle.getSeats());
+        dto.setCreatedAt(vehicle.getCreatedAt());
+        dto.setDriverId(vehicle.getDriver().getUserId());
+        return dto;
     }
-
 }

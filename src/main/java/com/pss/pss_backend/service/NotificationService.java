@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class NotificationService {
@@ -38,32 +37,43 @@ public class NotificationService {
     }
 
     public void notifyPassengers(Ride ride, String message) {
-        List<User> passengers = ride.getRidePassengers().stream().map(RidePassenger::getUser).toList(); // Assuming you have a method to fetch passengers
+        List<User> passengers = ride.getRidePassengers().stream().map(RidePassenger::getUser).toList();
         for (User passenger : passengers) {
-            // Send an email notification
             sendEmailNotification(passenger, ride, message);
 
-            // Optionally save the notification in the database
             saveNotification(passenger, message);
         }
     }
 
     private void sendEmailNotification(User passenger, Ride ride, String message) {
-        String emailSubject = "Ride Notification";
-        String emailBody = "<html>"
-                + "<body>"
-                + "<p>Dear " + passenger.getFullName() + ",</p>"
-                + "<p>" + message + "</p>"
-                + "<table>"
-                + "<tr><th>Start Location</th><td>" + ride.getOrigin() + "</td></tr>"
-                + "<tr><th>Destination</th><td>" + ride.getDestination() + "</td></tr>"
-                + "<tr><th>Departure Time</th><td>" + ride.getDepartureTime() + "</td></tr>"
-                + "</table>"
-                + "<p>Thank you for using our service.</p>"
-                + "</body>"
-                + "</html>";
+        String emailSubject = "Important Ride Update";
+        String emailBody = "<html>" +
+                "<head>" +
+                "<style>" +
+                "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }" +
+                "table { width: 100%; border-collapse: collapse; margin-top: 20px; }" +
+                "th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }" +
+                "th { background-color: #f4f4f4; font-weight: bold; }" +
+                "</style>" +
+                "</head>" +
+                "<body>" +
+                "<h2>Dear " + passenger.getFullName() + ",</h2>" +
+                "<p>" + message + "</p>" +
+                "<h3>Ride Details</h3>" +
+                "<table>" +
+                "<tr><th>Start Location</th><td>" + ride.getOrigin() + "</td></tr>" +
+                "<tr><th>Destination</th><td>" + ride.getDestination() + "</td></tr>" +
+                "<tr><th>Departure Time</th><td>" + ride.getDepartureTime() + "</td></tr>" +
+                "</table>" +
+                "<p>If you have any questions, feel free to contact our support team.</p>" +
+                "<p>Thank you for using our service.</p>" +
+                "<p><strong>Best regards,</strong><br>The Ride Team</p>" +
+                "</body>" +
+                "</html>";
+
         emailService.sendConfirmationEmail(passenger.getEmail(), emailSubject, emailBody);
     }
+
 
     private void saveNotification(User passenger, String message) {
         Notification notification = new Notification();

@@ -27,7 +27,7 @@ public class EmailService {
 
             emailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email", e); // Optional: wrap the exception in a runtime exception
+            throw new RuntimeException("Failed to send email", e);
         }
     }
 }

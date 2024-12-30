@@ -1,9 +1,11 @@
 package com.pss.pss_backend.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 @Entity
 @Table(name = "ride_passengers")
@@ -17,28 +19,20 @@ public class RidePassenger {
     @ManyToOne
     @JoinColumn(name = "ride_id", nullable = false)
     @JsonBackReference
+    @JsonIgnore
     private Ride ride;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     @JsonManagedReference
+    @ToString.Exclude
+    @JsonIgnore
     private User user;
 
     @Column(nullable = false)
     private String role; // "driver" or "passenger"
 
     @Column(nullable = false)
-    private String status = "pending"; // New field: "pending", "approved", "denied"
+    private String status = "pending"; // "pending", "approved", "denied"
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
 }
