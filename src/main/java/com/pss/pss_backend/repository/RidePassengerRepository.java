@@ -22,4 +22,7 @@ public interface RidePassengerRepository extends JpaRepository<RidePassenger, Lo
 
     Optional<RidePassenger> findByRide_RideIdAndUser_UserIdAndRole(Long rideId, Long userId, String role);
 
+    List<RidePassenger> findByUser_UserIdAndStatusIn(Long userId, List<String> statuses);
+
+
 }

@@ -1,6 +1,7 @@
 package com.pss.pss_backend.controller;
 
 import com.pss.pss_backend.dto.RequestDTO;
+import com.pss.pss_backend.dto.RideDTO;
 import com.pss.pss_backend.model.RidePassenger;
 import com.pss.pss_backend.service.RidePassengerService;
 import com.pss.pss_backend.service.UserService;
@@ -58,6 +59,40 @@ public class RidePassengerController {
         }
     }
 
+    @PostMapping("/requests/{rideId}/send")
+    public ResponseEntity<Map<String, String>> sendRequest(@PathVariable Long rideId) {
+        try {
+            String username = getLoggedInUsername();
+
+            Long passengerId = userService.getUserByUsername(username)
+                    .map(user -> user.getUserId().longValue())
+                    .orElseThrow(() -> new RuntimeException("Passenger not found for username: " + username));
+
+            // Create the request in the service
+            ridePassengerService.sendRequest(rideId, passengerId);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Request sent successfully");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", ex.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @GetMapping("/booked-rides")
+    public ResponseEntity<List<RideDTO>> getBookedRides() {
+        String username = getLoggedInUsername();
+
+        Long userId = userService.getUserByUsername(username)
+                .map(user -> user.getUserId().longValue())
+                .orElseThrow(() -> new RuntimeException("User not found for username: " + username));
+
+        List<RideDTO> bookedRides = ridePassengerService.getBookedRidesForUser(userId);
+        return ResponseEntity.ok(bookedRides);
+    }
+
 
     private String getLoggedInUsername() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -67,5 +102,6 @@ public class RidePassengerController {
             return principal.toString();
         }
     }
+
 
 }

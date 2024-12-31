@@ -92,9 +92,23 @@ public class RideController {
     public List<RideStatusDTO> getRidesByFilters(
             @RequestParam String status,
             @RequestParam(required = false) String destination,
-            @RequestParam(required = false, defaultValue = "0") int minSeats,
+            @RequestParam(required = false, defaultValue = "1") int minSeats,
             @RequestParam(required = false) String sortBy) {
+        if (minSeats < 1) {
+            minSeats = 1;
+        }
         return rideService.getFilteredRides(status, destination, minSeats, sortBy);
+    }
+
+    @PostMapping("/{rideId}/cancel-passenger")
+    public ResponseEntity<Void> cancelRidePassenger(@PathVariable Long rideId, @RequestBody Map<String, Long> payload) {
+        Long passengerId = payload.get("passengerId");
+        try {
+            rideService.passengerCancelRide(rideId, passengerId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
     }
 
 

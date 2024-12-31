@@ -20,6 +20,7 @@ public class RidePassenger {
     @JoinColumn(name = "ride_id", nullable = false)
     @JsonBackReference
     @JsonIgnore
+    @ToString.Exclude
     private Ride ride;
 
     @ManyToOne
@@ -33,6 +34,6 @@ public class RidePassenger {
     private String role; // "driver" or "passenger"
 
     @Column(nullable = false)
-    private String status = "pending"; // "pending", "approved", "denied"
+    private String status = "PENDING"; // "pending", "approved", "denied"
 
 }

@@ -1,5 +1,6 @@
 package com.pss.pss_backend.dto;
 
+import com.pss.pss_backend.model.Ride;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class RideDTO {
     @NotBlank
-    private String startLocation;
+    private String origin;
 
     @NotBlank
     private String destination;
@@ -20,4 +21,19 @@ public class RideDTO {
 
     @NotNull
     private Integer availableSeats;
+
+    private String status;
+
+    private Long id;
+
+    private String driverName;
+
+    public RideDTO(Ride ride) {
+        this.id = ride.getRideId();
+        this.origin = ride.getOrigin();
+        this.destination = ride.getDestination();
+        this.departureTime = ride.getDepartureTime();
+        this.availableSeats = ride.getAvailableSeats();
+        this.status = ride.getStatus();
+    }
 }

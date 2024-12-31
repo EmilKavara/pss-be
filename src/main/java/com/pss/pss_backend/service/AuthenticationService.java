@@ -33,11 +33,25 @@ public class AuthenticationService {
             throw new IllegalArgumentException("Email is already in use.");
         }
 
+        String generatedUsername = input.getUsername();
+        if (generatedUsername == null || generatedUsername.isEmpty()) {
+            generatedUsername = generateUsernameFromFullName(input.getFullName());
+        }
+
+        User existingUserByUsername = userRepository.findByUsername(generatedUsername).orElse(null);
+
+        int counter = 1;
+        while (existingUserByUsername != null) {
+            generatedUsername = generateUsernameFromFullName(input.getFullName()) + counter;
+            existingUserByUsername = userRepository.findByUsername(generatedUsername).orElse(null);
+            counter++;
+        }
+
         User user = new User();
         user.setFullName(input.getFullName());
         user.setEmail(input.getEmail());
         user.setRole(input.getRole());
-        user.setUsername(generateUsernameFromFullName(input.getFullName()));
+        user.setUsername(generatedUsername);
         user.setPassword(passwordEncoder.encode(input.getPassword()));
 
         return userRepository.save(user);

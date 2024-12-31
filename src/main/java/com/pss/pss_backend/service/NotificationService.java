@@ -82,4 +82,16 @@ public class NotificationService {
         notification.setStatus("UNREAD");
         notificationRepository.save(notification);
     }
+
+    public void markAsRead(List<Long> notificationIds) {
+        List<Notification> notifications = notificationRepository.findAllById(notificationIds);
+        notifications.forEach(notification -> notification.setStatus("READ"));
+        notificationRepository.saveAll(notifications);
+    }
+
+    public List<Notification> getUserNotifications(Long userId) {
+        return notificationRepository.findByUser_UserIdAndStatus(userId, "UNREAD");
+    }
+
+
 }

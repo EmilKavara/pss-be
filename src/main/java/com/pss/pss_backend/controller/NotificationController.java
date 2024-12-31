@@ -43,4 +43,16 @@ public class NotificationController {
     public void deleteNotification(@PathVariable Long notificationId) {
         notificationService.deleteNotification(notificationId);
     }
+
+    @PostMapping("/mark-as-read")
+    public ResponseEntity<?> markNotificationsAsRead(@RequestBody List<Long> notificationIds) {
+        notificationService.markAsRead(notificationIds);
+        return ResponseEntity.ok("Notifications marked as read");
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Notification>> getNotifications(@PathVariable Long userId) {
+        return ResponseEntity.ok(notificationService.getUserNotifications(userId));
+    }
+
 }

@@ -46,7 +46,7 @@ public class RideService {
         validateDepartureTime(rideDTO.getDepartureTime());
 
         Ride ride = new Ride();
-        ride.setOrigin(rideDTO.getStartLocation());
+        ride.setOrigin(rideDTO.getOrigin());
         ride.setDestination(rideDTO.getDestination());
         ride.setDepartureTime(rideDTO.getDepartureTime());
         ride.setAvailableSeats(rideDTO.getAvailableSeats());
@@ -160,12 +160,13 @@ public class RideService {
                 .orElseThrow(() -> new RideNotFoundException("Ride not found"));
 
         RidePassenger ridePassenger = ridePassengerRepository
-                .findByRide_RideIdAndUser_UserIdAndRole(rideId, passengerId, "passenger")
+                .findByRide_RideIdAndUser_UserIdAndRole(rideId, passengerId, "PASSENGER")
                 .orElseThrow(() -> new RuntimeException("Passenger not found for this ride"));
 
-        if (!ridePassenger.getStatus().equals("APPROVED")) {
+        if (!ridePassenger.getStatus().equals("APPROVED") && !ridePassenger.getStatus().equals("PENDING")) {
             throw new RuntimeException("Passenger cannot cancel this ride. Status: " + ridePassenger.getStatus());
         }
+
 
         ridePassengerRepository.delete(ridePassenger);
 

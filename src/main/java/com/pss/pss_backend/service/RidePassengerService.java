@@ -1,13 +1,13 @@
 package com.pss.pss_backend.service;
 
 import com.pss.pss_backend.dto.RequestDTO;
+import com.pss.pss_backend.dto.RideDTO;
 import com.pss.pss_backend.model.*;
-import com.pss.pss_backend.repository.NotificationRepository;
-import com.pss.pss_backend.repository.ReservationRepository;
-import com.pss.pss_backend.repository.RidePassengerRepository;
+import com.pss.pss_backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,6 +16,12 @@ public class RidePassengerService {
 
     @Autowired
     private RidePassengerRepository ridePassengerRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RideRepository rideRepository;
 
     @Autowired
     private ReservationRepository reservationRepository;
@@ -138,6 +144,35 @@ public class RidePassengerService {
                 ride.getDepartureTime()
         );
     }
+
+    public void sendRequest(Long rideId, Long passengerId) {
+        Ride ride = rideRepository.findById(rideId)
+                .orElseThrow(() -> new RuntimeException("Ride not found with ID: " + rideId));
+        User user = userRepository.findById(passengerId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + passengerId));
+
+        RidePassenger request = new RidePassenger();
+        request.setRide(ride);
+        request.setUser(user);
+        request.setRole("PASSENGER");
+        request.setStatus("PENDING");
+
+        ridePassengerRepository.save(request);
+    }
+
+    public List<RideDTO> getBookedRidesForUser(Long userId) {
+        List<RidePassenger> ridePassengers = ridePassengerRepository.findByUser_UserIdAndStatusIn(userId, Arrays.asList("APPROVED", "PENDING"));
+
+        return ridePassengers.stream()
+                .map(ridePassenger -> {
+                    RideDTO rideDTO = new RideDTO(ridePassenger.getRide());
+                    rideDTO.setStatus(ridePassenger.getStatus());
+                    rideDTO.setDriverName(ridePassenger.getRide().getDriver().getFullName());
+                    return rideDTO;
+                })
+                .collect(Collectors.toList());
+    }
+
 
 
 
