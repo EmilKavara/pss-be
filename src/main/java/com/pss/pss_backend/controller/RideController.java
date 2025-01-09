@@ -2,20 +2,23 @@ package com.pss.pss_backend.controller;
 
 import com.pss.pss_backend.dto.DelayRequest;
 import com.pss.pss_backend.dto.RideDTO;
+import com.pss.pss_backend.dto.RideGraphData;
 import com.pss.pss_backend.dto.RideStatusDTO;
 import com.pss.pss_backend.model.Ride;
+import com.pss.pss_backend.responses.ApiResponse;
 import com.pss.pss_backend.service.RideService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/rides")
@@ -77,16 +80,24 @@ public class RideController {
     }
 
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelRide(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> cancelRide(@PathVariable Long id) {
         rideService.cancelRide(id);
-        return ResponseEntity.ok("Ride cancelled successfully");
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Ride cancelled successfully");
+        return ResponseEntity.ok(response);
     }
+
 
     @PostMapping("/{id}/delay")
     public ResponseEntity<?> reportDelay(@PathVariable Long id, @RequestBody DelayRequest delayRequest) {
-        rideService.reportDelay(id, delayRequest.getNewDepartureTime());
-        return ResponseEntity.ok("Delay reported successfully");
+        try {
+            rideService.reportDelay(id, delayRequest.getNewDepartureTime());
+            return ResponseEntity.ok(new ApiResponse("Delay reported successfully", true));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse("Error reporting delay", false));
+        }
     }
+
 
     @GetMapping("/filter-advanced")
     public List<RideStatusDTO> getRidesByFilters(
@@ -110,6 +121,38 @@ public class RideController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
+
+    @GetMapping("/driver/{driverId}/planned-rides")
+    public ResponseEntity<List<Ride>> getPlannedRides(
+            @PathVariable Long driverId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        List<Ride> plannedRides = rideService.getPlannedRides(driverId, startDate.atStartOfDay(), endDate.atTime(23, 59, 59));
+        return ResponseEntity.ok(plannedRides);
+    }
+
+    @GetMapping("/driver/{driverId}/ride-stats")
+    public ResponseEntity<List<RideGraphData>> getRideStats(@PathVariable Long driverId) {
+
+        List<Ride> rides = rideService.getRidesByDriver(driverId);
+
+        List<RideGraphData> monthlyStats = groupRidesByMonth(rides);
+
+        return ResponseEntity.ok(monthlyStats);
+    }
+
+    private List<RideGraphData> groupRidesByMonth(List<Ride> rides) {
+
+        Map<String, Long> monthlyStats = rides.stream()
+                .collect(Collectors.groupingBy(ride -> String.valueOf(ride.getDepartureTime().getMonth()), Collectors.counting()));
+
+        List<RideGraphData> graphData = new ArrayList<>();
+        monthlyStats.forEach((month, count) -> graphData.add(new RideGraphData(month, count)));
+        return graphData;
+    }
+
+
 
 
 }

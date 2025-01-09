@@ -5,9 +5,11 @@ import com.pss.pss_backend.model.Ride;
 import com.pss.pss_backend.model.RidePassenger;
 import com.pss.pss_backend.model.User;
 import com.pss.pss_backend.repository.NotificationRepository;
+import com.pss.pss_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,6 +18,9 @@ public class NotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private EmailService emailService;
@@ -92,6 +97,20 @@ public class NotificationService {
     public List<Notification> getUserNotifications(Long userId) {
         return notificationRepository.findByUser_UserIdAndStatus(userId, "UNREAD");
     }
+
+    /*public Notification sendMessage(Long senderId, Long recipientId, String message) {
+        User recipient = userRepository.findById(recipientId).orElseThrow(() -> new RuntimeException("User not found"));
+
+        Notification notification = new Notification();
+        notification.setSenderId(senderId);
+        notification.setUser(recipient);
+        notification.setMessage(message);
+        notification.setStatus("sent");
+        notification.setCreatedAt(LocalDateTime.now());
+
+        return notificationRepository.save(notification);
+    }*/
+
 
 
 }

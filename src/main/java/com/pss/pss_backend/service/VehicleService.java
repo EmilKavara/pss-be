@@ -7,6 +7,7 @@ import com.pss.pss_backend.repository.VehicleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -78,6 +79,17 @@ public class VehicleService {
                 .orElseThrow(() -> new RuntimeException("Vehicle not found"));
         return vehicle.getSeats();
     }
+
+    public List<VehicleDTO> getVehiclesByDriver(com.pss.pss_backend.model.User driver) {
+        List<Vehicle> vehicles = vehicleRepository.findAllByDriver(driver);
+
+        return vehicles.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+
+
 
     // Metoda za konverziju iz Vehicle u VehicleDTO
     private VehicleDTO toDTO(Vehicle vehicle) {

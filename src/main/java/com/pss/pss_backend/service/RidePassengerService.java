@@ -7,6 +7,7 @@ import com.pss.pss_backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -161,9 +162,14 @@ public class RidePassengerService {
     }
 
     public List<RideDTO> getBookedRidesForUser(Long userId) {
-        List<RidePassenger> ridePassengers = ridePassengerRepository.findByUser_UserIdAndStatusIn(userId, Arrays.asList("APPROVED", "PENDING"));
+        List<RidePassenger> ridePassengers = ridePassengerRepository.findByUser_UserIdAndStatusIn(
+                userId, Arrays.asList("APPROVED", "PENDING")
+        );
+
+        LocalDateTime now = LocalDateTime.now();
 
         return ridePassengers.stream()
+                .filter(ridePassenger -> ridePassenger.getRide().getDepartureTime().isAfter(now))
                 .map(ridePassenger -> {
                     RideDTO rideDTO = new RideDTO(ridePassenger.getRide());
                     rideDTO.setStatus(ridePassenger.getStatus());
@@ -172,6 +178,7 @@ public class RidePassengerService {
                 })
                 .collect(Collectors.toList());
     }
+
 
 
 

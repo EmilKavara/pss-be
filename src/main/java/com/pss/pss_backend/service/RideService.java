@@ -15,6 +15,7 @@ import com.pss.pss_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -50,6 +51,7 @@ public class RideService {
         ride.setDestination(rideDTO.getDestination());
         ride.setDepartureTime(rideDTO.getDepartureTime());
         ride.setAvailableSeats(rideDTO.getAvailableSeats());
+        ride.setStatus("ACTIVE");
         ride.setDriver(driver);
 
         Ride savedRide = rideRepository.save(ride);
@@ -185,22 +187,25 @@ public class RideService {
     }
 
     public List<RideStatusDTO> getFilteredRides(String status, String destination, int minSeats, String sortBy) {
-        // Fetch rides based on status
+
         List<Ride> rides = rideRepository.findByStatus(status);
 
-        // Filter by destination if provided
+        LocalDateTime now = LocalDateTime.now();
+
+        rides = rides.stream()
+                .filter(ride -> ride.getDepartureTime().isAfter(now))
+                .collect(Collectors.toList());
+
         if (destination != null && !destination.isEmpty()) {
             rides = rides.stream()
                     .filter(ride -> ride.getDestination().equalsIgnoreCase(destination))
                     .collect(Collectors.toList());
         }
 
-        // Filter by minimum available seats
         rides = rides.stream()
                 .filter(ride -> ride.getAvailableSeats() >= minSeats)
                 .collect(Collectors.toList());
 
-        // Sort based on the sortBy parameter
         if (sortBy != null) {
             switch (sortBy) {
                 case "availableSeats":
@@ -210,11 +215,10 @@ public class RideService {
                     rides.sort(Comparator.comparing(Ride::getDepartureTime));
                     break;
                 default:
-                    break; // No sorting if sortBy is empty or invalid
+                    break;
             }
         }
 
-        // Convert to DTOs
         return rides.stream()
                 .map(ride -> new RideStatusDTO(
                         ride.getRideId(),
@@ -226,6 +230,19 @@ public class RideService {
                         ride.getDriver().getFullName()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    public List<Ride> getPlannedRides(Long driverId, LocalDateTime startDate, LocalDateTime endDate) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime sevenDaysFromNow = now.plusDays(7);
+
+        return rideRepository.findByDriver_UserIdAndDepartureTimeBetween(driverId, now, sevenDaysFromNow);
+    }
+
+
+
+    public List<Ride> getRidesByDriver(Long driverId) {
+        return rideRepository.findByDriver_UserId(driverId);
     }
 
 

@@ -43,13 +43,14 @@ public class User implements UserDetails {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "driver", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    //@JsonManagedReference
     @ToString.Exclude
     @JsonIgnore
     private List<Ride> rideHistory;
 
     @OneToMany(mappedBy = "driver", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    //@JsonManagedReference
+    @JsonIgnore
     @ToString.Exclude
     private List<Vehicle> vehicles = new ArrayList<>();
 

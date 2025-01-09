@@ -34,6 +34,9 @@ public class Notification {
     @Column(name="created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    //@Column(name = "sender_id", nullable = false)
+    //private Long senderId;
+
 
 }
 

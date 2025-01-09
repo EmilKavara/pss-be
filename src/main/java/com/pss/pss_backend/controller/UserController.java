@@ -5,6 +5,7 @@ import com.pss.pss_backend.model.User;
 import com.pss.pss_backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -66,17 +67,20 @@ public class UserController {
     }
 
 
-    @PutMapping("/profile")
-    public User updateUserProfile(@RequestBody User user, Principal principal) {
+    @PutMapping(value = "/profile", consumes={"application/json"})
+    public ResponseEntity<?> updateUserProfile(@RequestBody User user, Principal principal) {
         String username = principal.getName();
         User currentUser = userService.getUserByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         currentUser.setFullName(user.getFullName());
         currentUser.setEmail(user.getEmail());
+        currentUser.setRole(user.getRole());
 
-        return userService.saveUser(currentUser);
+        User updatedUser = userService.saveUser(currentUser);
+        return ResponseEntity.ok(updatedUser);
     }
+
 
 
 

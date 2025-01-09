@@ -26,6 +26,14 @@ public class VehicleController {
     @PostMapping
     public ResponseEntity<VehicleDTO> createVehicle(@RequestBody Vehicle vehicle) {
         try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            Optional<com.pss.pss_backend.model.User> driverOptional = userService.getUserByUsername(username);
+
+            if (driverOptional.isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+            com.pss.pss_backend.model.User driver = driverOptional.get();
+            vehicle.setDriver(driver);
             Vehicle savedVehicle = vehicleService.saveVehicle(vehicle);
             VehicleDTO vehicleDTO = vehicleService.getVehicleById(savedVehicle.getVehicleId()).orElseThrow();
             return ResponseEntity.status(HttpStatus.CREATED).body(vehicleDTO);
@@ -75,4 +83,24 @@ public class VehicleController {
 
         return vehicleOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }
+
+    @GetMapping("/driver/vehicles")
+    public ResponseEntity<List<VehicleDTO>> getVehiclesForDriver() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Optional<com.pss.pss_backend.model.User> driverOptional = userService.getUserByUsername(username);
+
+        if (driverOptional.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        com.pss.pss_backend.model.User driver = driverOptional.get();
+        List<VehicleDTO> vehicles = vehicleService.getVehiclesByDriver(driver);
+
+        if (vehicles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(vehicles);
+    }
+
 }

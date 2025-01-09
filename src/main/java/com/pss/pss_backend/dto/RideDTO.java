@@ -28,6 +28,8 @@ public class RideDTO {
 
     private String driverName;
 
+    public RideDTO() {}
+
     public RideDTO(Ride ride) {
         this.id = ride.getRideId();
         this.origin = ride.getOrigin();
