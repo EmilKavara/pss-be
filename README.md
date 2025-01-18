@@ -10,8 +10,6 @@ Passenger Sharing System (PSS) is an application designed to connect passengers 
 - [Technologies](#technologies)
 - [Installation and Setup](#installation-and-setup)
 - [Screenshots](#screenshots)
-- [Contributions](#contributions)
-- [License](#license)
 
 ---
 
