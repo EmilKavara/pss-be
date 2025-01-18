@@ -155,7 +155,7 @@ public class RidePassengerService {
         RidePassenger request = new RidePassenger();
         request.setRide(ride);
         request.setUser(user);
-        request.setRole("PASSENGER");
+        request.setRole("passenger");
         request.setStatus("PENDING");
 
         ridePassengerRepository.save(request);
